@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sound Bites — Auditory Processing Assessment</title>
+<link rel="stylesheet" href="css/styles.css" />
+<link rel="stylesheet" href="css/themes.css" />
+</head>
+<body class="theme-clinical">
+
+<canvas id="scene-canvas" aria-hidden="true"></canvas>
+<div class="progress-bar" id="progress" aria-hidden="true"></div>
+<div id="error-banner" role="alert"></div>
+<div id="toast" class="toast" role="status"></div>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">🎧</span>
+    <span class="brand-name">Sound Bites</span>
+    <span class="brand-tag">Auditory processing for OTs</span>
+  </div>
+  <div class="topbar-actions">
+    <label class="theme-toggle">
+      <span>Theme</span>
+      <select id="theme-select" title="Switch visual theme">
+        <option value="clinical">Clinical (light)</option>
+        <option value="subject">Subject (dark)</option>
+      </select>
+    </label>
+  </div>
+</header>
+
+<main class="app">
+
+  <!-- ========== SETUP / HOME ========== -->
+  <section class="screen" id="screen-setup">
+    <div class="setup-head">
+      <div>
+        <h1>Sound Bites</h1>
+        <p class="subtitle">Bilingual auditory processing, integration, and matching tests · English / German</p>
+      </div>
+      <div class="subject-bar">
+        <label for="subject-id">Subject ID</label>
+        <input type="text" id="subject-id" placeholder="e.g. AB-001" maxlength="40" />
+        <label for="game-lang">Language</label>
+        <select id="game-lang">
+          <option value="en-US">English</option>
+          <option value="de-DE">German (Deutsch)</option>
+        </select>
+      </div>
+    </div>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="memory" role="tab" type="button">Memory & Recall</button>
+      <button class="tab" data-tab="processing" role="tab" type="button">Processing Tests</button>
+      <button class="tab" data-tab="training" role="tab" type="button">Training Games</button>
+      <button class="tab" data-tab="dash" role="tab" type="button">Dashboard</button>
+    </nav>
+
+    <!-- ===== Memory tab ===== -->
+    <div class="tab-panel active" id="tab-memory">
+      <div class="grid grid-2">
+        <div class="card">
+          <h2>Background Scene</h2>
+          <div class="scene-grid">
+            <button class="scene-btn active" data-scene="park" type="button">
+              <span class="scene-icon">🌿</span><span>Outside Park</span>
+            </button>
+            <button class="scene-btn" data-scene="cafe" type="button">
+              <span class="scene-icon">☕</span><span>Busy Café</span>
+            </button>
+            <button class="scene-btn" data-scene="street" type="button">
+              <span class="scene-icon">🚦</span><span>Street Sounds</span>
+            </button>
+          </div>
+          <div class="audio-status" id="audio-status">Audio: ready</div>
+          <label>Background volume <span class="value-display" id="bg-vol-val">60%</span></label>
+          <input type="range" id="bg-vol" min="0" max="100" value="60" />
+          <label>Speech-in-noise SNR <span class="value-display" id="snr-val">+5 dB</span></label>
+          <input type="range" id="snr" min="-10" max="20" step="1" value="5" />
+          <p class="small">Higher SNR = words clearer over background. 0 dB = equal level.</p>
+          <button class="ghost full" id="preview-bg" type="button">Preview scene</button>
+        </div>
+
+        <div class="card">
+          <h2>Voice & Pacing</h2>
+          <label for="voice-select">Voice</label>
+          <select id="voice-select"><option>Loading voices…</option></select>
+          <button class="ghost full" id="btn-voice-test" type="button" style="margin-top:8px;">Test selected voice</button>
+          <label style="margin-top:14px;">Speech rate <span class="value-display" id="rate-val">1.0×</span></label>
+          <input type="range" id="rate" min="0.5" max="1.5" step="0.05" value="1.0" />
+          <label style="margin-top:14px;">Interval between words <span class="value-display" id="interval-val">3.0s</span></label>
+          <input type="range" id="interval" min="1.5" max="8" step="0.5" value="3" />
+          <label style="margin-top:14px;">Show word visually?</label>
+          <select id="show-word">
+            <option value="yes">Yes — show on screen</option>
+            <option value="no" selected>No — audio only</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
+        <h2>Word List</h2>
+        <label for="words">Enter words to present (one per line, or comma-separated)</label>
+        <textarea id="words" placeholder="apple&#10;river&#10;mountain"></textarea>
+        <div class="row">
+          <span class="small">Word count: <span class="value-display" id="word-count">0</span></span>
+        </div>
+        <div class="actions">
+          <button class="ghost" id="btn-randomize" type="button">Shuffle order</button>
+          <button class="primary" id="btn-start-memory" type="button">Start memory test →</button>
+        </div>
+      </div>
+    </div><!-- /tab-memory -->
+
+    <!-- ===== Processing tests tab ===== -->
+    <div class="tab-panel" id="tab-processing">
+      <p class="small section-intro">SCAN-3-style assessments. Best run with headphones.</p>
+      <div class="game-grid">
+        <button class="game-card" data-test="env-bingo" type="button">
+          <span class="game-icon">🔔</span>
+          <div class="game-title">Environmental Sound ID</div>
+          <div class="game-desc">Hear a real recorded sound (dog, phone, doorbell), tap the matching picture. Tests sound recognition.</div>
+        </button>
+        <button class="game-card" data-test="temporal-pitch" type="button">
+          <span class="game-icon">🎚️</span>
+          <div class="game-title">Pitch Pattern</div>
+          <div class="game-desc">Hear 3 tones (high/low). Identify the sequence. Tests temporal-frequency processing.</div>
+        </button>
+        <button class="game-card" data-test="temporal-dur" type="button">
+          <span class="game-icon">⏱️</span>
+          <div class="game-title">Duration Pattern</div>
+          <div class="game-desc">Hear 3 tones (long/short). Identify the sequence. Tests temporal-duration processing.</div>
+        </button>
+        <button class="game-card" data-test="span" type="button">
+          <span class="game-icon">🔢</span>
+          <div class="game-title">Digit Span</div>
+          <div class="game-desc">Repeat sequences of digits, forward then backward. Standard auditory memory measure.</div>
+        </button>
+        <button class="game-card" data-test="localize" type="button">
+          <span class="game-icon">🧭</span>
+          <div class="game-title">Sound Localization</div>
+          <div class="game-desc">Indicate whether a sound came from the left, center, or right. Headphones required.</div>
+        </button>
+        <button class="game-card" data-test="dichotic" type="button">
+          <span class="game-icon">🎧</span>
+          <div class="game-title">Dichotic Listening</div>
+          <div class="game-desc">Different sounds in each ear simultaneously. Identify what was heard. Headphones required.</div>
+        </button>
+      </div>
+    </div><!-- /tab-processing -->
+
+    <!-- ===== Training games tab ===== -->
+    <div class="tab-panel" id="tab-training">
+      <p class="small section-intro">Less formal exercises for auditory training and warm-up.</p>
+      <div class="game-grid">
+        <button class="game-card" data-game="matching" type="button">
+          <span class="game-icon">🃏</span>
+          <div class="game-title">Memory Matching</div>
+          <div class="game-desc">Flip cards two at a time to hear words. Find pairs from memory.</div>
+        </button>
+        <button class="game-card" data-game="odd" type="button">
+          <span class="game-icon">🎯</span>
+          <div class="game-title">Odd One Out</div>
+          <div class="game-desc">Listen to a set of words. Identify the one that doesn't belong.</div>
+        </button>
+        <button class="game-card" data-game="pairs" type="button">
+          <span class="game-icon">🔤</span>
+          <div class="game-title">Minimal Pairs</div>
+          <div class="game-desc">P or B? K or G? Phoneme-discrimination practice.</div>
+        </button>
+        <button class="game-card" data-game="yesno" type="button">
+          <span class="game-icon">✅</span>
+          <div class="game-title">Picture Match</div>
+          <div class="game-desc">Does the spoken word match the picture? Tap yes or no.</div>
+        </button>
+        <button class="game-card" data-game="stress" type="button">
+          <span class="game-icon">🎵</span>
+          <div class="game-title">Syllable Stress</div>
+          <div class="game-desc">Identify the stressed syllable in multi-syllable words.</div>
+        </button>
+        <button class="game-card" data-game="bingo-words" type="button">
+          <span class="game-icon">🎲</span>
+          <div class="game-title">Word Bingo</div>
+          <div class="game-desc">Hear a spoken word, tap the matching picture. Word-to-picture matching.</div>
+        </button>
+      </div>
+    </div><!-- /tab-training -->
+
+    <!-- ===== Dashboard tab ===== -->
+    <div class="tab-panel" id="tab-dash">
+      <div class="card">
+        <h2>Session Summary</h2>
+        <div class="stat-row">
+          <div class="stat"><div class="stat-num" id="dash-total">0</div><div class="stat-label">Sessions</div></div>
+          <div class="stat"><div class="stat-num" id="dash-words">0</div><div class="stat-label">Items tested</div></div>
+          <div class="stat"><div class="stat-num" id="dash-acc">—</div><div class="stat-label">Avg accuracy</div></div>
+        </div>
+        <div class="row">
+          <div style="flex:2;">
+            <label for="dash-filter">Filter by subject</label>
+            <input type="text" id="dash-filter" placeholder="(all subjects)" />
+          </div>
+          <div>
+            <label for="dash-type-filter">Activity</label>
+            <select id="dash-type-filter">
+              <option value="">All activities</option>
+              <option value="memory">Memory test</option>
+              <option value="env-bingo">Environmental sound ID</option>
+              <option value="temporal-pitch">Pitch pattern</option>
+              <option value="temporal-dur">Duration pattern</option>
+              <option value="span">Digit span</option>
+              <option value="localize">Sound localization</option>
+              <option value="dichotic">Dichotic listening</option>
+              <option value="matching">Memory matching</option>
+              <option value="odd">Odd one out</option>
+              <option value="pairs">Minimal pairs</option>
+              <option value="yesno">Picture match</option>
+              <option value="stress">Syllable stress</option>
+              <option value="bingo-words">Word bingo</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Per-category Accuracy</h2>
+        <div id="dash-by-category" class="cat-bars">No sessions yet.</div>
+      </div>
+
+      <div class="card">
+        <h2>Most-missed Items</h2>
+        <div id="dash-errors" class="small">No errors logged yet.</div>
+      </div>
+
+      <div class="card">
+        <h2>Session History</h2>
+        <div class="table-wrap">
+          <table class="session-table" id="dash-table">
+            <thead><tr>
+              <th>Date</th><th>Subject</th><th>Activity</th><th>Lang</th><th>Score</th><th>Errors</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="actions">
+          <button class="ghost" id="btn-clear-dash" type="button">Clear all data</button>
+          <button class="secondary" id="btn-export-csv" type="button">Export CSV</button>
+        </div>
+      </div>
+    </div><!-- /tab-dash -->
+  </section>
+
+  <!-- ========== Memory test flow screens ========== -->
+  <section class="screen hidden countdown-screen" id="screen-countdown">
+    <div class="countdown-label">Beginning in</div>
+    <div class="countdown-num" id="countdown-num">3</div>
+    <div class="subtitle" style="margin-top:24px;">Listen carefully. Words will be spoken once.</div>
+  </section>
+
+  <section class="screen hidden present-screen" id="screen-present">
+    <div class="word-display" id="word-display">&nbsp;</div>
+    <div class="present-status" id="present-status">Word 0 of 0</div>
+  </section>
+  <div class="present-controls hidden" id="present-controls">
+    <button class="secondary" id="btn-pause" type="button">⏸ Pause</button>
+    <button class="ghost" id="btn-stop" type="button">Stop</button>
+  </div>
+
+  <section class="screen hidden" id="screen-recall">
+    <h1>Recall</h1>
+    <div class="subtitle" id="recall-instructions">Type as many words as you remember, in any order.</div>
+    <textarea id="recall-input" placeholder="apple, river, ..." style="min-height:220px;"></textarea>
+    <div class="actions">
+      <button class="ghost" id="btn-back-setup" type="button">Cancel</button>
+      <button class="primary" id="btn-score" type="button">Score recall</button>
+    </div>
+  </section>
+
+  <section class="screen hidden" id="screen-results">
+    <h1>Results <span class="badge" id="result-scene">park</span></h1>
+    <div class="subtitle" id="result-meta"></div>
+    <div class="stat-row">
+      <div class="stat"><div class="stat-num good" id="stat-correct">0</div><div class="stat-label">Correct</div></div>
+      <div class="stat"><div class="stat-num bad" id="stat-missed">0</div><div class="stat-label">Missed</div></div>
+      <div class="stat"><div class="stat-num warn" id="stat-intrusions">0</div><div class="stat-label">Intrusions</div></div>
+    </div>
+    <div class="card">
+      <div class="legend">
+        <span><span class="legend-dot good"></span>Correct</span>
+        <span><span class="legend-dot bad"></span>Missed</span>
+        <span><span class="legend-dot warn"></span>Intrusion</span>
+      </div>
+      <div id="result-words"></div>
+    </div>
+    <div class="actions">
+      <button class="secondary" id="btn-export" type="button">Export results (.txt)</button>
+      <button class="primary" id="btn-new-test" type="button">Done</button>
+    </div>
+  </section>
+
+  <!-- ========== Existing game screens ========== -->
+  <section class="screen hidden" id="screen-game-matching">
+    <div class="game-header">
+      <h1>🃏 Memory Matching</h1>
+      <div class="game-stat">Pairs <strong id="match-found">0</strong>/<span id="match-total">6</span> · Flips <strong id="match-flips">0</strong></div>
+    </div>
+    <div class="subtitle">Tap two cards to hear their words. Find all matching pairs.</div>
+    <div class="match-grid" id="match-grid"></div>
+    <div class="actions">
+      <button class="ghost back-to-setup" type="button">← Back</button>
+      <button class="secondary" id="btn-match-restart" type="button">Restart</button>
+    </div>
+  </section>
+
+  <section class="screen hidden" id="screen-game-odd">
+    <div class="game-header">
+      <h1>🎯 Odd One Out</h1>
+      <div class="game-stat">Round <strong id="odd-round">1</strong>/10 · Score <strong id="odd-score">0</strong></div>
+    </div>
+    <div class="subtitle">Listen to all words. Tap the one that doesn't belong.</div>
+    <div class="center-row"><button class="replay-btn" id="btn-odd-play" type="button">▶ Play words</button></div>
+    <div class="choice-row" id="odd-choices"></div>
+    <div class="feedback-flash" id="odd-feedback"></div>
+    <div class="actions">
+      <button class="ghost back-to-setup" type="button">← Back</button>
+      <button class="secondary" id="btn-odd-next" type="button" disabled>Next round →</button>
+    </div>
+  </section>
+
+  <section class="screen hidden" id="screen-game-pairs">
+    <div class="game-header">
+      <h1>🔤 Minimal Pairs</h1>
+      <div class="game-stat">Round <strong id="pairs-round">1</strong>/10 · Score <strong id="pairs-score">0</strong></div>
+    </div>
+    <div class="subtitle">Listen carefully. Was the word…</div>
+    <div class="center-row">
+      <label>Contrast:&nbsp;</label>
+      <select id="pairs-contrast" style="width:auto;">
+        <option value="pb">P vs B (pat / bat)</option>
+        <option value="kg">K vs G (coat / goat)</option>
+        <option value="td">T vs D (tip / dip)</option>
+        <option value="fv">F vs V (fan / van)</option>
+        <option value="sz">S vs Z (sip / zip)</option>
+      </select>
+      <button class="ghost" id="btn-pairs-apply" type="button">Apply</button>
+    </div>
+    <div class="game-prompt" id="pairs-word-display">—</div>
+    <div class="center-row"><button class="replay-btn" id="btn-pairs-play" type="button">▶ Play word</button></div>
+    <div class="choice-row" id="pairs-choices"></div>
+    <div class="feedback-flash" id="pairs-feedback"></div>
+    <div class="actions">
+      <button class="ghost back-to-setup" type="button">← Back</button>
+    </div>
+  </section>
+
+  <section class="screen hidden" id="screen-game-bingo-words">
+    <div class="game-header">
+      <h1>🎲 Word Bingo</h1>
+      <div class="game-stat">Found <strong id="bw-found">0</strong>/<span id="bw-total">9</span> · Misses <strong id="bw-misses">0</strong></div>
+    </div>
+    <div class="subtitle">Listen, then tap the matching picture.</div>
+    <div class="center-row">
+      <button class="replay-btn" id="btn-bw-play" type="button">🔊 Play word</button>
+      <label>Board:&nbsp;</label>
+      <select id="bw-size" style="width:auto;">
+        <option value="9" selected>3 × 3</option>
+        <option value="12">3 × 4</option>
+        <option value="16">4 × 4</option>
+      </select>
+    </div>
+    <div class="match-grid" id="bw-grid"></div>
+    <div class="feedback-flash" id="bw-feedback"></div>
+    <div class="actions">
+      <button class="ghost back-to-setup" type="button">← Back</button>
+      <button class="secondary" id="btn-bw-restart" type="button">New board</button>
+    </div>
+  </section>
+
+  <section class="screen hidden" id="screen-game-yesno">
+    <div class="game-header">
+      <h1>✅ Picture Match</h1>
+      <div class="game-stat">Round <strong id="yesno-round">1</strong>/10 · Score <strong id="yesno-score">0</strong></div>
+    </div>
+    <div class="subtitle">Does the word you hear match the picture?</div>
+    <div class="picture-display" id="yesno-pic">🐶</div>
+    <div class="center-row"><button class="replay-btn" id="btn-yesno-play" type="button">🔊 Play word</button></div>
+    <div class="yesno-row" id="yesno-buttons">
+      <button class="yesno-btn no" data-ans="no" type="button">✗</button>
+      <button class="yesno-btn yes" data-ans="yes" type="button">✓</button>
+    </div>
+    <div class="feedback-flash" id="yesno-feedback"></div>
+    <div class="actions">
+      <button class="ghost back-to-setup" type="button">← Back</button>
+    </div>
+  </section>
+
+  <section class="screen hidden" id="screen-game-stress">
+    <div class="game-header">
+      <h1>🎵 Syllable Stress</h1>
+      <div class="game-stat">Round <strong id="stress-round">1</strong>/10 · Score <strong id="stress-score">0</strong></div>
+    </div>
+    <div class="subtitle">Listen to the word. Which syllable is stressed?</div>
+    <div class="picture-display medium" id="stress-pic">🌳</div>
+    <div class="game-prompt" id="stress-word">—</div>
+    <div class="center-row"><button class="replay-btn" id="btn-stress-play" type="button">🔊 Play word</button></div>
+    <div class="choice-row" id="stress-choices"></div>
+    <div class="feedback-flash" id="stress-feedback"></div>
+    <div class="actions">
+      <button class="ghost back-to-setup" type="button">← Back</button>
+    </div>
+  </section>
+
+  <!-- ========== New tests ========== -->
+  <section class="screen hidden" id="screen-test-env-bingo">
+    <div class="game-header">
+      <h1>🔔 Environmental Sound ID</h1>
+      <div class="game-stat">Found <strong id="eb-found">0</strong>/<span id="eb-total">9</span> · Misses <strong id="eb-misses">0</strong></div>
+    </div>
+    <div class="subtitle">Listen to the sound, then tap the matching picture.</div>
+    <div class="center-row">
+      <button class="replay-btn" id="btn-eb-play" type="button">🔊 Play sound</button>
+      <label>Board:&nbsp;</label>
+      <select id="eb-size" style="width:auto;">
+        <option value="9" selected>3 × 3</option>
+        <option value="12">3 × 4</option>
+      </select>
+    </div>
+    <div class="match-grid" id="eb-grid"></div>
+    <div class="feedback-flash" id="eb-feedback"></div>
+    <div class="actions">
+      <button class="ghost back-to-setup" type="button">← Back</button>
+      <button class="secondary" id="btn-eb-restart" type="button">New board</button>
+    </div>
+  </section>
+
+  <section class="screen hidden" id="screen-test-temporal">
+    <div class="game-header">
+      <h1 id="temporal-title">🎚️ Pitch Pattern</h1>
+      <div class="game-stat">Round <strong id="tp-round">1</strong>/10 · Score <strong id="tp-score">0</strong></div>
+    </div>
+    <div class="subtitle" id="temporal-subtitle">Listen to three tones. Pick the pattern you heard.</div>
+    <div class="center-row"><button class="replay-btn" id="btn-tp-play" type="button">▶ Play sequence</button></div>
+    <div class="choice-row" id="tp-choices"></div>
+    <div class="feedback-flash" id="tp-feedback"></div>
+    <div class="actions">
+      <button class="ghost back-to-setup" type="button">← Back</button>
+    </div>
+  </section>
+
+  <section class="screen hidden" id="screen-test-span">
+    <div class="game-header">
+      <h1>🔢 Digit Span</h1>
+      <div class="game-stat">Length <strong id="span-len">3</strong> · <span id="span-direction">Forward</span> · Score <strong id="span-score">0</strong></div>
+    </div>
+    <div class="subtitle" id="span-subtitle">Listen to the digits, then type them in the same order.</div>
+    <div class="center-row"><button class="replay-btn" id="btn-span-play" type="button">▶ Play digits</button></div>
+    <input type="text" id="span-input" placeholder="e.g. 4 7 2" style="font-size:24px; text-align:center; letter-spacing:6px;" />
+    <div class="actions">
+      <button class="ghost back-to-setup" type="button">← Back</button>
+      <button class="primary" id="btn-span-submit" type="button">Submit</button>
+    </div>
+    <div class="feedback-flash" id="span-feedback"></div>
+  </section>
+
+  <section class="screen hidden" id="screen-test-localize">
+    <div class="game-header">
+      <h1>🧭 Sound Localization</h1>
+      <div class="game-stat">Round <strong id="loc-round">1</strong>/12 · Score <strong id="loc-score">0</strong></div>
+    </div>
+    <div class="subtitle">Headphones required. Where did the sound come from?</div>
+    <div class="center-row"><button class="replay-btn" id="btn-loc-play" type="button">▶ Play sound</button></div>
+    <div class="loc-buttons">
+      <button class="loc-btn" data-side="left" type="button">⬅<br><small>Left</small></button>
+      <button class="loc-btn" data-side="center" type="button">⬤<br><small>Center</small></button>
+      <button class="loc-btn" data-side="right" type="button">➡<br><small>Right</small></button>
+    </div>
+    <div class="feedback-flash" id="loc-feedback"></div>
+    <div class="actions">
+      <button class="ghost back-to-setup" type="button">← Back</button>
+    </div>
+  </section>
+
+  <section class="screen hidden" id="screen-test-dichotic">
+    <div class="game-header">
+      <h1>🎧 Dichotic Listening</h1>
+      <div class="game-stat">Round <strong id="dl-round">1</strong>/10 · Score <strong id="dl-score">0</strong></div>
+    </div>
+    <div class="subtitle">Headphones required. Two sounds will play, one in each ear. Identify both.</div>
+    <div class="center-row"><button class="replay-btn" id="btn-dl-play" type="button">▶ Play</button></div>
+    <div class="row">
+      <div>
+        <label>Left ear heard:</label>
+        <select id="dl-left"><option value="">—</option></select>
+      </div>
+      <div>
+        <label>Right ear heard:</label>
+        <select id="dl-right"><option value="">—</option></select>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="ghost back-to-setup" type="button">← Back</button>
+      <button class="primary" id="btn-dl-submit" type="button">Submit</button>
+    </div>
+    <div class="feedback-flash" id="dl-feedback"></div>
+  </section>
+
+</main>
+
+<!-- ========== Scripts ========== -->
+<script src="js/data.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/games.js"></script>
+<script src="js/newtests.js"></script>
+<script src="js/memory.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
